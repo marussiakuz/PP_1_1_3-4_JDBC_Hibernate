@@ -22,13 +22,13 @@ public class UserDaoJDBCImpl implements UserDao {
                 "last_name VARCHAR(255) NOT NULL, " +
                 "age TINYINT NOT NULL)";
 
-        try (Connection connection = Util.getConnection()) {
+        try (Connection connection = Util.getConnection();) {
             connection.setAutoCommit(false);
 
             try (Statement statement = connection.createStatement()) {
                 statement.execute(sql);
                 connection.commit();
-            } catch (Exception e) {
+            } catch (SQLException e) {
                 connection.rollback();
                 LOGGER.log(Level.SEVERE, "failed to create a table users due to an error - {0}", e.getMessage());
             }
@@ -46,7 +46,7 @@ public class UserDaoJDBCImpl implements UserDao {
             try (Statement statement = connection.createStatement()) {
                 statement.execute(sql);
                 connection.commit();
-            } catch (Exception e) {
+            } catch (SQLException e) {
                 connection.rollback();
                 LOGGER.log(Level.SEVERE, "failed to drop table users due to an error - {0}", e.getMessage());
             }
@@ -67,7 +67,7 @@ public class UserDaoJDBCImpl implements UserDao {
                 statement.setByte(3, age);
                 statement.execute();
                 connection.commit();
-            } catch (Exception e) {
+            } catch (SQLException e) {
                 connection.rollback();
                 LOGGER.log(Level.SEVERE, "failed to save user with name - {0} due to an error - {1}",
                         new String[] {name, e.getMessage()});
@@ -88,7 +88,7 @@ public class UserDaoJDBCImpl implements UserDao {
                 statement.setLong(1, id);
                 statement.execute();
                 connection.commit();
-            } catch (Exception e) {
+            } catch (SQLException e) {
                 connection.rollback();
                 LOGGER.log(Level.SEVERE, "failed to remove user with id - {0} due to an error - {1}",
                         new String[] {String.valueOf(id), e.getMessage()});
@@ -128,10 +128,11 @@ public class UserDaoJDBCImpl implements UserDao {
             try (Statement statement = connection.createStatement()) {
                 statement.execute(sql);
                 connection.commit();
-            } catch (Exception e) {
+            } catch (SQLException e) {
                 connection.rollback();
                 LOGGER.log(Level.SEVERE, "failed to clear table users due to an error - {0}", e.getMessage());
             }
+
         } catch (SQLException ignore) {
         }
     }
