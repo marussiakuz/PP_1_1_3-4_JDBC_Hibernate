@@ -16,55 +16,95 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void createUsersTable() {
-        try (Connection connection = Util.getConnection();
-             Statement statement = connection.createStatement()) {
-            statement.execute("create table if not exists task_jdbc.users (" +
-                    "id int auto_increment primary key, " +
-                    "name varchar(255) not null, " +
-                    "last_name varchar(255) not null, " +
-                    "age tinyint not null)");
-        } catch (SQLException ignored) {
+        String sql = "CREATE TABLE IF NOT EXISTS users (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                "name VARCHAR(255) NOT NULL, " +
+                "last_name VARCHAR(255) NOT NULL, " +
+                "age TINYINT NOT NULL)";
+
+        try (Connection connection = Util.getConnection()) {
+            connection.setAutoCommit(false);
+
+            try (Statement statement = connection.createStatement()) {
+                statement.execute(sql);
+                connection.commit();
+            } catch (Exception e) {
+                connection.rollback();
+                LOGGER.log(Level.SEVERE, "failed to create a table users due to an error - {0}", e.getMessage());
+            }
+
+        } catch (SQLException ignore) {
         }
     }
 
     public void dropUsersTable() {
-        try (Connection connection = Util.getConnection();
-             Statement statement = connection.createStatement()) {
-            statement.execute("drop table if exists task_jdbc.users");
-        } catch (SQLException ignored) {
+        String sql = "DROP TABLE IF EXISTS users";
+
+        try (Connection connection = Util.getConnection()) {
+            connection.setAutoCommit(false);
+
+            try (Statement statement = connection.createStatement()) {
+                statement.execute(sql);
+                connection.commit();
+            } catch (Exception e) {
+                connection.rollback();
+                LOGGER.log(Level.SEVERE, "failed to drop table users due to an error - {0}", e.getMessage());
+            }
+
+        } catch (SQLException ignore) {
         }
     }
 
     public void saveUser(String name, String lastName, byte age) {
-        try (Connection connection = Util.getConnection();
-             PreparedStatement statement = connection.prepareStatement("insert into task_jdbc.users " +
-                     "(name, last_name, age) values (?, ?, ?)")) {
-             statement.setString(1, name);
-             statement.setString(2, lastName);
-             statement.setByte(3, age);
+        String sql = "INSERT INTO users (name, last_name, age) VALUES (?, ?, ?)";
 
-            statement.execute();
+        try (Connection connection = Util.getConnection()) {
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, name);
+                statement.setString(2, lastName);
+                statement.setByte(3, age);
+                statement.execute();
+                connection.commit();
+            } catch (Exception e) {
+                connection.rollback();
+                LOGGER.log(Level.SEVERE, "failed to save user with name - {0} due to an error - {1}",
+                        new String[] {name, e.getMessage()});
+            }
+
             LOGGER.log(Level.INFO, "User с именем – {0} добавлен в базу данных", name);
-        } catch (SQLException ignored) {
+        } catch (SQLException ignore) {
         }
     }
 
     public void removeUserById(long id) {
-        try (Connection connection = Util.getConnection();
-             PreparedStatement statement = connection.prepareStatement("delete from task_jdbc.users where id = ?")) {
-            statement.setLong(1, id);
-            statement.execute();
-        } catch (SQLException ignored) {
+        String sql = "DELETE FROM users WHERE id = ?";
+
+        try (Connection connection = Util.getConnection()) {
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, id);
+                statement.execute();
+                connection.commit();
+            } catch (Exception e) {
+                connection.rollback();
+                LOGGER.log(Level.SEVERE, "failed to remove user with id - {0} due to an error - {1}",
+                        new String[] {String.valueOf(id), e.getMessage()});
+            }
+
+        } catch (SQLException ignore) {
         }
     }
 
     public List<User> getAllUsers() {
+        String sql = "SELECT * FROM users";
         List<User> users = new ArrayList<>();
 
         try (Connection connection = Util.getConnection();
              Statement statement = connection.createStatement()) {
-            ResultSet resultSet = statement.executeQuery("select * from task_jdbc.users");
-
+            ResultSet resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
                 User user = new User();
                 user.setId(resultSet.getLong("id"));
@@ -80,10 +120,19 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void cleanUsersTable() {
-        try (Connection connection = Util.getConnection();
-             Statement statement = connection.createStatement()) {
-            statement.execute("truncate task_jdbc.users");
-        } catch (SQLException ignored) {
+        String sql = "TRUNCATE users";
+
+        try (Connection connection = Util.getConnection()) {
+            connection.setAutoCommit(false);
+
+            try (Statement statement = connection.createStatement()) {
+                statement.execute(sql);
+                connection.commit();
+            } catch (Exception e) {
+                connection.rollback();
+                LOGGER.log(Level.SEVERE, "failed to clear table users due to an error - {0}", e.getMessage());
+            }
+        } catch (SQLException ignore) {
         }
     }
 }
